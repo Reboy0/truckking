@@ -192,7 +192,7 @@ document.querySelector('.add-to-cart-form').addEventListener('submit', function(
     
     const formData = new FormData(this);
     
-    fetch('/add-to-cart', {
+    fetch('{{ url_for("add_to_cart") }}', {
         method: 'POST',
         body: formData
     })
@@ -233,7 +233,7 @@ function showToast(message, type) {
 }
 
 function updateCartCount() {
-    fetch('/cart-count')
+    fetch('/cart_count')
         .then(response => response.json())
         .then(data => {
             const badge = document.querySelector('.badge');
