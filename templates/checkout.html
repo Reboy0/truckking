@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Оформлення замовлення - Інтернет Магазин{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4"><i class="fas fa-credit-card"></i> Оформлення замовлення</h1>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <form id="checkoutForm" method="POST">
+                <!-- Контактна інформація -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Контактна інформація</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="first_name" class="form-label">Ім'я *</label>
+                                <input type="text" class="form-control" id="first_name" name="first_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="last_name" class="form-label">Прізвище *</label>
+                                <input type="text" class="form-control" id="last_name" name="last_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Телефон *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" placeholder="+380" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Адреса доставки -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Адреса доставки</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="city" class="form-label">Місто *</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="delivery_type" class="form-label">Спосіб доставки *</label>
+                                <select class="form-select" id="delivery_type" name="delivery_type" required>
+                                    <option value="">Оберіть спосіб</option>
+                                    <option value="nova_poshta">Нова Пошта</option>
+                                    <option value="ukr_poshta">Укрпошта</option>
+                                    <option value="courier">Кур'єр</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="delivery_address" class="form-label">Номер відділення/Адреса *</label>
+                                <input type="text" class="form-control" id="delivery_address" name="delivery_address" placeholder="№1 або вул. Хрещатик 1" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Спосіб оплати -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Спосіб оплати</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="payment_method" id="cash_on_delivery" value="cash_on_delivery" checked>
+                            <label class="form-check-label" for="cash_on_delivery">
+                                Оплата при отриманні
+                            </label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="payment_method" id="card_online" value="card_online">
+                            <label class="form-check-label" for="card_online">
+                                Оплата картою онлайн
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="bank_transfer" value="bank_transfer">
+                            <label class="form-check-label" for="bank_transfer">
+                                Банківський переказ
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Коментар -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">Коментар до замовлення</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea class="form-control" id="comment" name="comment" rows="3" placeholder="Додатковий коментар до замовлення..."></textarea>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Ваше замовлення -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Ваше замовлення</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Товари -->
+                    {% for item in cart_items %}
+                    <div class="d-flex justify-content-between mb-2">
+                        <div>
+                            <small>{{ item[3] }}</small>
+                            <div class="text-muted small">{{ item[2] }} × {{ item[4] }} ₴</div>
+                        </div>
+                        <div>{{ item[6] }} ₴</div>
+                    </div>
+                    {% endfor %}
+                    
+                    <hr>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Підсума:</span>
+                        <span>{{ cart_total }} ₴</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Доставка:</span>
+                        <span id="delivery_cost">{% if cart_total >= 1000 %}Безкоштовно{% else %}100 ₴{% endif %}</span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Всього:</strong>
+                        <strong id="total_cost">{{ cart_total + (0 if cart_total >= 1000 else 100) }} ₴</strong>
+                    </div>
+                    
+                    <button type="submit" form="checkoutForm" class="btn btn-success w-100 btn-lg">
+                        <i class="fas fa-check"></i> Підтвердити замовлення
+                    </button>
+                    
+                    <div class="mt-3 text-center">
+                        <small class="text-muted">
+                            Натискаючи кнопку, ви приймаете умови користування
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const data = Object.fromEntries(formData);
+    
+    fetch('/place_order', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '/order_success/' + data.order_id;
+        } else {
+            alert('Помилка при оформленні замовлення: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Помилка при оформленні замовлення');
+    });
+});
+
+// Оновлення вартості доставки при зміні способу доставки
+document.getElementById('delivery_type').addEventListener('change', function() {
+    const deliveryCost = document.getElementById('delivery_cost');
+    const totalCost = document.getElementById('total_cost');
+    const cartTotal = {{ cart_total }};
+    
+    let deliveryPrice = 0;
+    if (this.value === 'courier') {
+        deliveryPrice = cartTotal >= 1000 ? 0 : 150;
+    } else {
+        deliveryPrice = cartTotal >= 1000 ? 0 : 100;
+    }
+    
+    deliveryCost.textContent = deliveryPrice === 0 ? 'Безкоштовно' : deliveryPrice + ' ₴';
+    totalCost.textContent = (cartTotal + deliveryPrice) + ' ₴';
+});
+</script>
+{% endblock %}

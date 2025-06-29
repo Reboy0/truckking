@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог товарів - Інтернет Магазин{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Бічна панель з фільтрами -->
+        <div class="col-lg-3 mb-4">
+            <div class="filter-sidebar">
+                <h5 class="mb-3"><i class="fas fa-filter"></i> Фільтри</h5>
+                
+                <!-- Фільтр за категоріями -->
+                <div class="mb-4">
+                    <h6>Категорії</h6>
+                    <form method="GET" action="{{ url_for('products') }}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="category" value="" id="all_categories" 
+                                   {% if not selected_category %}checked{% endif %}>
+                            <label class="form-check-label" for="all_categories">
+                                Всі категорії
+                            </label>
+                        </div>
+                        {% for category in categories %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="category" value="{{ category[0] }}" 
+                                   id="cat_{{ category[0] }}" {% if selected_category == category[0] %}checked{% endif %}>
+                            <label class="form-check-label" for="cat_{{ category[0] }}">
+                                {{ category[1] }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                        <button type="submit" class="btn btn-primary btn-sm mt-2">Застосувати</button>
+                    </form>
+                </div>
+                
+                <!-- Фільтр за ціною -->
+                <div class="mb-4">
+                    <h6>Ціна (₴)</h6>
+                    <form method="GET" action="{{ url_for('products') }}">
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="number" class="form-control form-control-sm" name="min_price" 
+                                       placeholder="Від" min="0">
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control form-control-sm" name="max_price" 
+                                       placeholder="До" min="0">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm mt-2 w-100">Застосувати</button>
+                    </form>
+                </div>
+                
+                <!-- Швидкі фільтри за ціною -->
+                <div class="mb-4">
+                    <h6>Швидкий вибір</h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('products', min_price=0, max_price=1000) }}" class="btn btn-outline-secondary btn-sm">До 1000 ₴</a>
+                        <a href="{{ url_for('products', min_price=1000, max_price=5000) }}" class="btn btn-outline-secondary btn-sm">1000-5000 ₴</a>
+                        <a href="{{ url_for('products', min_price=5000, max_price=20000) }}" class="btn btn-outline-secondary btn-sm">5000-20000 ₴</a>
+                        <a href="{{ url_for('products', min_price=20000) }}" class="btn btn-outline-secondary btn-sm">Понад 20000 ₴</a>
+                    </div>
+                </div>
+                
+                <!-- Скинути фільтри -->
+                <div

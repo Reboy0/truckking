@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Головна - Інтернет Магазин{% endblock %}
+
+{% block content %}
+<!-- Героїчна секція -->
+<section class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4 mb-4">Ласкаво просимо до ShopUA</h1>
+        <p class="lead mb-4">Знайдіть все, що вам потрібно, в одному місці</p>
+        <a href="{{ url_for('products') }}" class="btn btn-light btn-lg">
+            <i class="fas fa-shopping-bag"></i> Почати покупки
+        </a>
+    </div>
+</section>
+
+<!-- Категорії товарів -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Категорії товарів</h2>
+        <div class="row g-4">
+            {% for category in categories %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card category-card h-100 text-center p-4" onclick="location.href='{{ url_for('category_products', category_id=category[0]) }}';" style="cursor: pointer;">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {% if category[1] == 'Електроніка' %}
+                                <i class="fas fa-laptop fa-3x"></i>
+                            {% elif category[1] == 'Одяг' %}
+                                <i class="fas fa-tshirt fa-3x"></i>
+                            {% elif category[1] == 'Дім та сад' %}
+                                <i class="fas fa-home fa-3x"></i>
+                            {% elif category[1] == 'Спорт' %}
+                                <i class="fas fa-futbol fa-3x"></i>
+                            {% elif category[1] == 'Книги' %}
+                                <i class="fas fa-book fa-3x"></i>
+                            {% else %}
+                                <i class="fas fa-tag fa-3x"></i>
+                            {% endif %}
+                        </div>
+                        <h5 class="card-title">{{ category[1] }}</h5>
+                        <p class="card-text">{{ category[2] if category[2] else 'Переглянути товари цієї категорії' }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Рекомендовані товари -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Рекомендовані товари</h2>
+        <div class="row g-4">
+            {% for product in featured_products %}
+            <div class="col-md-6 col-lg-3">
+                <div class="card product-card h-100">
+                    <div class="product-image card-img-top d-flex align-items-center justify-content-center">
+                        <i class="fas fa-image"></i>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h6 class="card-title">{{ product[1] }}</h6>
+                        <p class="card-text text-muted small flex-grow-1">
+                            {{ product[4][:50] + '...' if product[4] and product[4]|length > 50 else (product[4] or 'Опис товару') }}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="price-tag">{{ product[2] }} ₴</span>
+                            <small class="text-muted">{{ product[9] or 'Різне' }}</small>
+                        </div>
+                        <div class="mt-3">
+                            <a href="{{ url_for('product_detail', product_id=product[0]) }}" class="btn btn-primary btn-sm me-2">
+                                <i class="fas fa-eye"></i> Деталі
+                            </a>
+                            <button class="btn btn-success btn-sm">
+                                <i class="fas fa-cart-plus"></i> В кошик
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('products') }}" class="btn btn-outline-primary btn-lg">
+                Переглянути всі товари <i class="fas fa-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Переваги магазину -->
+<section class="py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Чому обирають нас?</h2>
+        <div class="row g-4">
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-shipping-fast fa-3x text-primary"></i>
+                </div>
+                <h5>Швидка доставка</h5>
+                <p class="text-muted">Доставляємо по всій Україні протягом 1-3 днів</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-shield-alt fa-3x text-success"></i>
+                </div>
+                <h5>Гарантія якості</h5>
+                <p class="text-muted">Всі товари мають офіційну гарантію</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="mb-3">
+                    <i class="fas fa-headset fa-3x text-info"></i>
+                </div>
+                <h5>Підтримка 24/7</h5>
+                <p class="text-muted">Наша команда завжди готова допомогти</p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
