@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import shutil
-
+import uuid
 DB_NAME = 'shop.db'
 IMAGE_FOLDER = 'images'
 
@@ -161,16 +161,23 @@ def get_products_by_price_range(min_price, max_price):
                        WHERE p.price BETWEEN ? AND ?''', (min_price, max_price))
         return cur.fetchall()
 
-def add_product_image(product_id, source_path):
-    filename = os.path.basename(source_path)
-    dest_path = os.path.join(IMAGE_FOLDER, filename)
-    shutil.copy2(source_path, dest_path)
 
+def add_product_image(product_id, image_file):
+    # Генеруємо унікальне ім’я файла
+    filename = f"{uuid.uuid4().hex}_{image_file.filename}"
+    dest_path = os.path.join(IMAGE_FOLDER, filename)
+
+    # Створюємо папку images, якщо не існує
+    os.makedirs(IMAGE_FOLDER, exist_ok=True)
+
+    # Зберігаємо файл
+    image_file.save(dest_path)
+
+    # Додаємо шлях до БД
     with connect() as conn:
         cur = conn.cursor()
         cur.execute('INSERT INTO product_images (product_id, image_path) VALUES (?, ?)', (product_id, dest_path))
         conn.commit()
-
 def get_product_with_images(product_id):
     with connect() as conn:
         cur = conn.cursor()
@@ -341,9 +348,9 @@ def update_order_status(order_id, status):
         conn.commit()
 
 # Функція для ініціалізації тестових даних
-def init_sample_data():
+"""def init_sample_data():
     # Додаємо категорії
-    categories = [
+    #categories = [
         ("Деталі двигуна", "Запчастини для двигунів вантажних автомобілів"),
         ("Гальмівна система", "Гальмівні колодки, диски, барабани"),
         ("Підвіска", "Амортизатори, пружини, стійки"),
@@ -375,4 +382,4 @@ def init_sample_data():
                           VALUES (?, ?, ?, ?, ?, ?)''', 
                        (name, price, buyprice, desc, cat_id, stock))
         
-        conn.commit()
+        conn.commit()"""

@@ -1,0 +1,8 @@
+<h2>Товари</h2>
+<a href="{{ url_for('admin_add_product') }}">+ Додати новий товар</a>
+<ul>
+    {% for product in products %}
+        <li>{{ product[1] }} — {{ product[2] }} грн ({{ product[-1] or 'Без категорії' }})</li>
+    {% endfor %}
+</ul>
+<a href="{{ url_for('admin_home') }}">Назад</a>

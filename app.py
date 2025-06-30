@@ -8,7 +8,7 @@ app.secret_key = 'your_secret_key'  # заміни на надійний клю�
 # Ініціалізація бази даних при запуску
 with app.app_context():
     db.init_db()
-    db.init_sample_data()
+    #db.init_sample_data()
 
 def get_session_id():
     """Отримує або створює ID сесії для кошика"""
