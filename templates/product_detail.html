@@ -1,123 +1,197 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} - Інтернет Магазин{% endblock %}
+{% block title %}{{ product[1] }} - Інтернет Магазин{% endblock %}
 
 {% block content %}
 <div class="container py-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{{ url_for('mainlink') }}">Головна</a></li>
-            <li class="breadcrumb-item"><a href="{{ url_for('products_tree') }}">Каталог</a></li>
-            {% if product.category_slug and product.category_name %}
-            <li class="breadcrumb-item"><a href="{{ url_for('category_products_slug', slug=product.category_slug) }}">{{ product.category_name }}</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('products') }}">Товари</a></li>
+            {% if product[5] %}
+            <li class="breadcrumb-item"><a href="{{ url_for('category_products', category_id=product[5]) }}">{{ product[9] or 'Категорія' }}</a></li>
             {% endif %}
-            <li class="breadcrumb-item active">{{ product.name }}</li>
+            <li class="breadcrumb-item active">{{ product[1] }}</li>
         </ol>
     </nav>
+
     <div class="row">
         <!-- Зображення товару -->
         <div class="col-lg-6 mb-4">
             <div class="card">
                 <div class="card-body p-0">
-                    {% if images and images|length > 0 %}
-                    <div id="productImagesCarousel" class="carousel slide" data-bs-ride="carousel">
-                        <div class="carousel-inner">
-                            {% for img in images %}
-                            <div class="carousel-item {% if loop.index0 == 0 %}active{% endif %}">
-                                <img src="{{ img.image_url }}" alt="Фото {{ loop.index }}" class="d-block w-100" style="max-height:320px;object-fit:contain;cursor:pointer;" data-bs-toggle="modal" data-bs-target="#imageModal" data-img="{{ img.image_url }}">
+                    {% if images %}
+                        <div id="productCarousel" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                                {% for image in images %}
+                                <div class="carousel-item {% if loop.first %}active{% endif %}">
+                                    <img src="{{ url_for('static', filename=image) }}" class="d-block w-100" alt="{{ product[1] }}" style="height: 400px; object-fit: cover;">
+                                </div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
+                            {% if images|length > 1 %}
+                            <button class="carousel-control-prev" type="button" data-bs-target="#productCarousel" data-bs-slide="prev">
+                                <span class="carousel-control-prev-icon"></span>
+                            </button>
+                            <button class="carousel-control-next" type="button" data-bs-target="#productCarousel" data-bs-slide="next">
+                                <span class="carousel-control-next-icon"></span>
+                            </button>
+                            {% endif %}
                         </div>
-                        {% if images|length > 1 %}
-                        <button class="carousel-control-prev" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Попереднє</span>
-                        </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#productImagesCarousel" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Наступне</span>
-                        </button>
-                        {% endif %}
-                    </div>
                     {% else %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" class="img-fluid mb-2" style="max-height:320px;object-fit:contain;">
+                        <div class="d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
+                            <i class="fas fa-image fa-5x text-muted"></i>
+                        </div>
                     {% endif %}
                 </div>
             </div>
         </div>
+
         <!-- Інформація про товар -->
         <div class="col-lg-6">
             <div class="card h-100">
                 <div class="card-body">
-                    <h1 class="h3 mb-3">{{ product.name }}</h1>
-                    {% if product.category_name %}
+                    <h1 class="h3 mb-3">{{ product[1] }}</h1>
+                    
+                    {% if product[9] %}
                     <p class="text-muted mb-2">
-                        Категорія: <a href="{{ url_for('category_products_slug', slug=product.category_slug) }}">{{ product.category_name }}</a>
+                        <i class="fas fa-tag"></i> 
+                        <a href="{{ url_for('category_products', category_id=product[5]) }}" class="text-decoration-none">
+                            {{ product[9] }}
+                        </a>
                     </p>
                     {% endif %}
+
                     <div class="mb-3">
-                        <span class="price-tag">{{ product.price }} ₴</span>
-                        <span class="badge bg-secondary ms-2">В наявності: {{ product.stock_quantity }}</span>
+                        <span class="h2 text-success fw-bold">{{ product[2] }} ₴</span>
+                        {% if product[3] and product[3] != product[2] %}
+                        <small class="text-muted ms-2">
+                            <s>{{ product[3] }} ₴</s>
+                        </small>
+                        {% endif %}
                     </div>
-                    {% if product.description %}
-                    <div class="mb-3">{{ product.description }}</div>
+
+                    {% if product[6] is defined %}
+                    <div class="mb-3">
+                        {% if product[6] > 0 %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check"></i> В наявності ({{ product[6] }} шт.)
+                            </span>
+                        {% else %}
+                            <span class="badge bg-danger">
+                                <i class="fas fa-times"></i> Немає в наявності
+                            </span>
+                        {% endif %}
+                    </div>
                     {% endif %}
-                    <form class="add-to-cart-form">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <div class="input-group mb-3" style="max-width:180px;">
-                            <input type="number" name="quantity" value="1" min="1" class="form-control">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-cart-plus"></i> В кошик</button>
+
+                    {% if product[4] %}
+                    <div class="mb-4">
+                        <h5>Опис товару</h5>
+                        <p class="text-muted">{{ product[4] }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Форма додавання в кошик -->
+                    <form class="add-to-cart-form mb-3">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-auto">
+                                <label for="quantity" class="form-label">Кількість:</label>
+                                <input type="number" class="form-control" id="quantity" name="quantity" value="1" min="1" max="{{ product[6] or 99 }}" style="width: 80px;">
+                            </div>
+                            <div class="col-auto">
+                                <button type="submit" class="btn btn-success btn-lg" {% if product[6] == 0 %}disabled{% endif %}>
+                                    <i class="fas fa-cart-plus"></i> Додати в кошик
+                                </button>
+                            </div>
                         </div>
+                        <input type="hidden" name="product_id" value="{{ product[0] }}">
                     </form>
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-danger">
+                            <i class="fas fa-heart"></i> В бажані
+                        </button>
+                        <button class="btn btn-outline-info">
+                            <i class="fas fa-share-alt"></i> Поділитися
+                        </button>
+                    </div>
+
+                    <!-- Інформація про доставку -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6><i class="fas fa-truck"></i> Доставка та оплата</h6>
+                        <ul class="list-unstyled mb-0 small text-muted">
+                            <li><i class="fas fa-check text-success"></i> Безкоштовна доставка від 1000 ₴</li>
+                            <li><i class="fas fa-check text-success"></i> Доставка по Україні 1-3 дні</li>
+                            <li><i class="fas fa-check text-success"></i> Оплата при отриманні</li>
+                            <li><i class="fas fa-check text-success"></i> Гарантія повернення 14 днів</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Характеристики товару -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card">
                 <div class="card-header">
-                    <b>Характеристики</b>
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#description" role="tab">Опис</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#specifications" role="tab">Характеристики</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#reviews" role="tab">Відгуки</a>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    {% if attributes and attributes|length > 0 %}
-                        <ul class="mb-0">
-                        {% for attr in attributes %}
-                            <li>{{ attr }}</li>
-                        {% endfor %}
-                        </ul>
-                    {% else %}
-                        <span class="text-muted">Немає характеристик</span>
-                    {% endif %}
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="description" role="tabpanel">
+                            <p>{{ product[4] or 'Детальний опис товару буде додано пізніше.' }}</p>
+                        </div>
+                        <div class="tab-pane fade" id="specifications" role="tabpanel">
+                            <table class="table table-striped">
+                                <tr>
+                                    <td><strong>Артикул</strong></td>
+                                    <td>{{ product[0] }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Категорія</strong></td>
+                                    <td>{{ product[9] or 'Не вказано' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Наявність</strong></td>
+                                    <td>{{ product[6] or 0 }} шт.</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Дата додавання</strong></td>
+                                    <td>{{ product[7] or 'Не вказано' }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade" id="reviews" role="tabpanel">
+                            <p>Відгуків поки немає. Будьте першим!</p>
+                            <button class="btn btn-primary">Додати відгук</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-<!-- Modal для збільшення фото -->
-<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-body p-0">
-        <img src="" id="modalImage" class="img-fluid w-100" style="object-fit:contain;">
-      </div>
-    </div>
-  </div>
-</div>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Відкриття фото у модальному вікні
-    document.querySelectorAll('#productImagesCarousel img[data-bs-toggle="modal"]').forEach(function(img) {
-        img.addEventListener('click', function() {
-            document.getElementById('modalImage').src = this.getAttribute('data-img');
-        });
-    });
-});
 
+<script>
+// AJAX додавання в кошик
 document.querySelector('.add-to-cart-form').addEventListener('submit', function(e) {
     e.preventDefault();
+    
     const formData = new FormData(this);
+    
     fetch('{{ url_for("add_to_cart") }}', {
         method: 'POST',
         body: formData
@@ -125,15 +199,48 @@ document.querySelector('.add-to-cart-form').addEventListener('submit', function(
     .then(response => response.json())
     .then(data => {
         if (data.success) {
+            // Оновлюємо лічильник кошика
             updateCartCount();
+            
+            // Показуємо повідомлення
             showToast('Товар додано в кошик!', 'success');
         } else {
             showToast('Помилка при додаванні товару', 'error');
         }
     })
     .catch(error => {
+        console.error('Error:', error);
         showToast('Помилка при додаванні товару', 'error');
     });
 });
+
+function showToast(message, type) {
+    // Простий toast
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        if (toast.parentElement) {
+            toast.remove();
+        }
+    }, 3000);
+}
+
+function updateCartCount() {
+    fetch('/cart_count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.badge');
+            if (badge) {
+                badge.textContent = data.count;
+            }
+        });
+}
 </script>
 {% endblock %}

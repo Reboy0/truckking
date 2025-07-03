@@ -1,6 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash, send_from_directory
-import uuid
 import data_module as db
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+import uuid
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # заміни на надійний ключ
@@ -24,20 +24,19 @@ def mainlink():
 
 @app.route("/products")
 def products():
-    category_slug = request.args.get('category')
+    category_id = request.args.get('category')
     search_query = request.args.get('search')
     min_price = request.args.get('min_price', type=int)
     max_price = request.args.get('max_price', type=int)
 
     products = []
     categories = db.get_all_categories()
-    selected_category = category_slug
 
     if search_query:
         products = db.search_products(search_query)
-    elif category_slug:
-        products = db.get_products_by_category_slug(category_slug)
-    elif min_price is not None and max_price is not None:
+    elif category_id:
+        products = db.get_products_by_category(int(category_id))
+    elif min_price and max_price:
         products = db.get_products_by_price_range(min_price, max_price)
     else:
         products = db.get_all_products()
@@ -45,52 +44,36 @@ def products():
     return render_template("products.html", 
                            products=products, 
                            categories=categories,
-                           selected_category=selected_category)
+                           selected_category=int(category_id) if category_id else None)
 
 @app.route("/product/<int:product_id>")
 def product_detail(product_id):
     product_data = db.get_product_with_images(product_id)
-    if not product_data or not product_data.get('product'):
+    if not product_data['product']:
         flash("Товар не знайдено", "error")
         return redirect(url_for('products'))
+
     return render_template("product_detail.html", 
                            product=product_data['product'], 
                            images=product_data['images'])
 
+@app.route("/category/<int:category_id>")
+def category_products(category_id):
+    category = db.get_category_by_id(category_id)
+    products = db.get_products_by_category(category_id)
+    categories = db.get_all_categories()
 
-# Каталог з деревом категорій (slug)
-@app.route("/products/tree")
-def products_tree():
-    category_slug = request.args.get('category')
-    search_query = request.args.get('search')
-    min_price = request.args.get('min_price', type=int)
-    max_price = request.args.get('max_price', type=int)
-
-    products = []
-    categories_tree = db.get_all_categories_tree()
-    selected_category = category_slug
-
-    if search_query:
-        products = db.search_products(search_query)
-    elif category_slug:
-        products = db.get_products_by_category_slug(category_slug)
-    elif min_price is not None and max_price is not None:
-        products = db.get_products_by_price_range(min_price, max_price)
-    else:
-        products = db.get_all_products()
-
-    return render_template("products_tree.html",
+    return render_template("category.html", 
+                           category=category, 
                            products=products,
-                           categories_tree=categories_tree,
-                           selected_category=selected_category)
-
-## Видалено дубльований роут /category/<slug>
+                           categories=categories)
 
 @app.route("/search")
 def search():
     query = request.args.get('q', '')
     products = db.search_products(query) if query else []
     categories = db.get_all_categories()
+
     return render_template("search_results.html", 
                            products=products, 
                            query=query,
@@ -100,59 +83,57 @@ def search():
 @app.route("/add_to_cart", methods=['POST'])
 def add_to_cart():
     try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        quantity = data.get('quantity', 1)
+
         session_id = get_session_id()
-        # Підтримка як JSON (AJAX), так і form-data
-        if request.is_json:
-            data = request.get_json()
-            product_id = int(data.get('product_id'))
-            quantity = int(data.get('quantity', 1))
-        else:
-            product_id = int(request.form.get('product_id'))
-            quantity = int(request.form.get('quantity', 1))
         db.add_to_cart(session_id, product_id, quantity)
-        # Повертаємо актуальну кількість у кошику для оновлення лічильника
-        cart_count = db.get_cart_count(session_id)
-        return jsonify({'success': True, 'message': 'Товар додано в кошик', 'cart_count': cart_count})
+
+        return jsonify({'success': True, 'message': 'Товар додано в кошик'})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route("/remove_from_cart", methods=['POST'])
 def remove_from_cart():
     try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+
         session_id = get_session_id()
-        if request.is_json:
-            data = request.get_json()
-            product_id = int(data.get('product_id'))
-        else:
-            product_id = int(request.form.get('product_id'))
         db.remove_from_cart(session_id, product_id)
-        cart_count = db.get_cart_count(session_id)
-        return jsonify({'success': True, 'cart_count': cart_count})
+
+        return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route("/update_cart", methods=['POST'])
 def update_cart():
     try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        quantity = data.get('quantity')
+
         session_id = get_session_id()
-        if request.is_json:
-            data = request.get_json()
-            product_id = int(data.get('product_id'))
-            quantity = int(data.get('quantity', 1))
-        else:
-            product_id = int(request.form.get('product_id'))
-            quantity = int(request.form.get('quantity', 1))
         db.update_cart_quantity(session_id, product_id, quantity)
+
+        cart_total = db.get_cart_total(session_id)
         cart_count = db.get_cart_count(session_id)
-        return jsonify({'success': True, 'cart_count': cart_count})
+
+        return jsonify({
+            'success': True,
+            'cart_total': cart_total,
+            'cart_count': cart_count
+        })
     except Exception as e:
-        return jsonify({'success': False, 'message': str(e)}), 400
+        return jsonify({'success': False, 'message': str(e)})
 
 @app.route("/cart")
 def cart():
     session_id = get_session_id()
     cart_items = db.get_cart_items(session_id)
     cart_total = db.get_cart_total(session_id)
+
     return render_template("cart.html", 
                            cart_items=cart_items, 
                            cart_total=cart_total)
@@ -169,9 +150,11 @@ def checkout():
     session_id = get_session_id()
     cart_items = db.get_cart_items(session_id)
     cart_total = db.get_cart_total(session_id)
+
     if not cart_items:
-        flash("Ваш кошик порожній", "error")
+        flash("Ваш кошик порожній", "warning")
         return redirect(url_for('cart'))
+
     return render_template("checkout.html", 
                            cart_items=cart_items, 
                            cart_total=cart_total)
@@ -185,11 +168,14 @@ def place_order():
         delivery_address = request.form.get('delivery_address')
         payment_method = request.form.get('payment_method')
         notes = request.form.get('notes', '')
+
         session_id = get_session_id()
         cart_items = db.get_cart_items(session_id)
+
         if not cart_items:
             flash("Ваш кошик порожній", "error")
             return redirect(url_for('cart'))
+
         order_id = db.create_order(
             session_id=session_id,
             customer_name=customer_name,
@@ -199,9 +185,12 @@ def place_order():
             payment_method=payment_method,
             notes=notes
         )
+
         db.clear_cart(session_id)
+
         flash(f"Замовлення №{order_id} успішно оформлено!", "success")
         return redirect(url_for('order_success', order_id=order_id))
+
     except Exception as e:
         flash(f"Помилка при оформленні замовлення: {str(e)}", "error")
         return redirect(url_for('checkout'))
@@ -212,6 +201,7 @@ def order_success(order_id):
     if not order:
         flash("Замовлення не знайдено", "error")
         return redirect(url_for('mainlink'))
+
     return render_template("order_success.html", order=order)
 
 @app.route("/my_orders")
@@ -219,35 +209,6 @@ def my_orders():
     session_id = get_session_id()
     orders = db.get_orders_by_session(session_id)
     return render_template("my_orders.html", orders=orders)
-
-@app.route('/images/<path:filename>')
-def images(filename):
-    return send_from_directory('images', filename)
-
-## Видалено дубльований роут /products/tree
-
-@app.route("/category/<slug>")
-def category_products_slug(slug):
-    category = db.get_category_by_slug(slug)
-    if not category:
-        flash("Категорію не знайдено", "error")
-        return redirect(url_for('products_tree'))
-    products = db.get_products_by_category_slug(slug)
-    categories_tree = db.get_all_categories_tree()
-    # Побудова breadcrumbs
-    breadcrumbs = []
-    current = category
-    while current and current[3]:
-        parent = db.get_category_by_slug(current[3])
-        if parent:
-            breadcrumbs.insert(0, {'name': parent[1], 'slug': parent[2]})
-        current = parent
-    breadcrumbs.append({'name': category[1], 'slug': category[2]})
-    return render_template("category_tree.html", 
-                           category=category, 
-                           products=products,
-                           categories_tree=categories_tree,
-                           breadcrumbs=breadcrumbs)
 
 @app.context_processor
 def inject_categories():
