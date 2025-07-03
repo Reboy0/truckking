@@ -1,12 +1,31 @@
 <h2>Категорії</h2>
 <form method="post" action="{{ url_for('admin_add_category') }}">
     <input name="name" placeholder="Назва" required>
+    <input name="slug" placeholder="Slug (латиницею, унікально)" required>
+    <select name="parent_slug">
+        <option value="">(Без батьківської)</option>
+        {% for cat in categories %}
+            <option value="{{ cat[2] }}">{{ cat[1] }}</option>
+        {% endfor %}
+    </select>
     <input name="description" placeholder="Опис">
     <button type="submit">Додати</button>
 </form>
 <ul>
-    {% for cat in categories %}
-        <li>{{ cat[1] }} — {{ cat[2] }}</li>
-    {% endfor %}
+    {% macro render_tree(tree) %}
+        {% for cat in tree %}
+            <li>
+                <b>{{ cat.name }}</b> (slug: <code>{{ cat.slug }}</code>)
+                <form method="post" action="{{ url_for('admin_delete_category', slug=cat.slug) }}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Видалити категорію?')">🗑️</button>
+                </form>
+                <a href="{{ url_for('admin_edit_category', slug=cat.slug) }}">✏️</a>
+                {% if cat.children %}
+                    <ul>{{ render_tree(cat.children) }}</ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+    {% endmacro %}
+    {{ render_tree(tree) }}
 </ul>
 <a href="{{ url_for('admin_home') }}">Назад</a>

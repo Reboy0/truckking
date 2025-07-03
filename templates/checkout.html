@@ -112,12 +112,17 @@
                 <div class="card-body">
                     <!-- Товари -->
                     {% for item in cart_items %}
-                    <div class="d-flex justify-content-between mb-2">
-                        <div>
-                            <small>{{ item[3] }}</small>
-                            <div class="text-muted small">{{ item[2] }} × {{ item[4] }} ₴</div>
+                    <div class="d-flex justify-content-between mb-2 align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if item.image_url %}
+                                <img src="{{ item.image_url }}" alt="{{ item.name }}" style="width:48px;height:48px;object-fit:cover;margin-right:10px;">
+                            {% endif %}
+                            <div>
+                                <small>{{ item.name }}</small>
+                                <div class="text-muted small">{{ item.quantity }} × {{ item.price }} ₴</div>
+                            </div>
                         </div>
-                        <div>{{ item[6] }} ₴</div>
+                        <div>{{ item.total_price }} ₴</div>
                     </div>
                     {% endfor %}
                     

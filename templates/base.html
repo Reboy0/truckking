@@ -92,13 +92,13 @@
                         <a class="nav-link" href="{{ url_for('products') }}">Всі товари</a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <a class="nav-link dropdown-toggle" href="{{ url_for('products_tree') }}" role="button" data-bs-toggle="dropdown">
                             Категорії
                         </a>
                         <ul class="dropdown-menu">
                             {% if categories %}
                                 {% for category in categories %}
-                                <li><a class="dropdown-item" href="{{ url_for('category_products', category_id=category[0]) }}">{{ category[1] }}</a></li>
+<li><a class="dropdown-item" href="{{ url_for('category_products_slug', slug=category[2]) }}">{{ category[1] }}</a></li>
                                 {% endfor %}
                             {% endif %}
                         </ul>
@@ -115,7 +115,7 @@
                 
                 <!-- Кореща покупок -->
                 <div class="d-flex">
-                    <a href="#" class="btn btn-outline-light">
+                    <a href="{{ url_for('cart') }}" class="btn btn-outline-light">
                         <i class="fas fa-shopping-cart"></i> Кошик <span class="badge bg-danger">0</span>
                     </a>
                 </div>
@@ -141,7 +141,7 @@
                     <ul class="list-unstyled">
                         {% if categories %}
                             {% for category in categories[:5] %}
-                            <li><a href="{{ url_for('category_products', category_id=category[0]) }}" class="text-light text-decoration-none">{{ category[1] }}</a></li>
+                            <li><a href="{{ url_for('category_products_slug', slug=category[2]) }}" class="text-light text-decoration-none">{{ category[1] }}</a></li>
                             {% endfor %}
                         {% endif %}
                     </ul>
@@ -161,5 +161,56 @@
     </footer>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+// Додавання товару в кошик через AJAX
+function addToCart(productId, quantity = 1) {
+    fetch('/add_to_cart', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ product_id: productId, quantity: quantity })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            updateCartCount();
+            showToast('Товар додано в кошик!', 'success');
+        } else {
+            showToast('Помилка при додаванні товару: ' + (data.message || ''), 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Помилка при додаванні товару', 'danger');
+    });
+}
+
+// Оновлення лічильника кошика
+function updateCartCount() {
+    fetch('/cart_count')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.fa-shopping-cart ~ .badge, .fa-shopping-cart + .badge, .btn .badge');
+            if (badge) {
+                badge.textContent = data.count;
+            }
+        });
+}
+
+// Простий toast
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed`;
+    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        if (toast.parentElement) toast.remove();
+    }, 3000);
+}
+</script>
 </body>
 </html>

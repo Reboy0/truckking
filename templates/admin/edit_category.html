@@ -1,0 +1,15 @@
+<h2>Редагувати категорію</h2>
+<form method="post">
+    <input name="name" value="{{ category[1] }}" placeholder="Назва" required><br>
+    <select name="parent_slug">
+        <option value="">(Без батьківської)</option>
+        {% for cat in categories %}
+            {% if cat[2] != category[2] %}
+                <option value="{{ cat[2] }}" {% if cat[2] == category[3] %}selected{% endif %}>{{ cat[1] }}</option>
+            {% endif %}
+        {% endfor %}
+    </select><br>
+    <input name="description" value="{{ category[4] }}" placeholder="Опис"><br>
+    <button type="submit">Зберегти</button>
+</form>
+<a href="{{ url_for('admin_categories') }}">Назад</a>
